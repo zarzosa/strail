@@ -21,10 +21,11 @@ function strail(pluginConfig = {}) {
 
 function sendData(payload, config, instance) {
   // Save UTMS
+  const utms = ['source', 'medium', 'campaign', 'term', 'content'];
   const params = new URL(window.location.href).searchParams;
-  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
-    if (params.get(utm)) {
-      analytics.storage.setItem(utm, params.get(utm), 'sessionStorage');
+  utms.forEach(utm => {
+    if (params.get('utm_' + utm)) {
+      analytics.storage.setItem(utm, params.get('utm_' + utm), 'sessionStorage');
     }
   });
 
@@ -42,8 +43,8 @@ function sendData(payload, config, instance) {
   if (instance.getState().context) {
     data.context = instance.getState().context
 
-    ['source', 'medium', 'campaign', 'term', 'content'].forEach(utm => {
-      if (analytics.storage.getItem('utm_' + utm)) { data.context.campaign[utm] = analytics.storage.getItem('utm_source') }
+    utms.forEach(utm => {
+      if (analytics.storage.getItem(utm)) { data.context.campaign[utm] = analytics.storage.getItem('utm_source') }
     });
   }
 
