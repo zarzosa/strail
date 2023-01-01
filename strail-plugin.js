@@ -8,54 +8,48 @@ function strail(pluginConfig = {}) {
       //console.log(config);
     },
     page: ({ payload, config, instance }) => {
-      const traits = instance.getState().user.traits;
-      const context = instance.getState().context;
-
-      const data = JSON.stringify({
-        type: payload.type,
-        userId: payload.userId,
-        anonymousId: payload.anonymousId,
-        properties: payload.properties,
-        traits: traits,
-        context: context
-      });
-
-      fetch(config.endpoint, {method: "POST", headers: {'Content-Type': 'application/json'}, body: data});
-      //navigator.sendBeacon(config.endpoint, data);
-      console.log(data);
+      sendData(payload, config, instance);
     },
     track: ({ payload, config, instance }) => {
-      const traits = instance.getState().user.traits;
-      const context = instance.getState().context;
-
-      const data = JSON.stringify({
-        type: payload.type,
-        event: payload.event ? payload.event : 'track',
-        userId: payload.userId,
-        anonymousId: payload.anonymousId,
-        properties: payload.properties,
-        traits: traits,
-        context: context
-      });
-      
-      fetch(config.endpoint, {method: "POST", headers: {'Content-Type': 'application/json'}, body: data});
-      //navigator.sendBeacon(config.endpoint, data);
-      console.log(data);
+      sendData(payload, config, instance);
     },
     identify: ({ payload, config, instance }) => {
-      const context = instance.getState().context;
-
-      const data = JSON.stringify({
-        type: payload.type,
-        userId: payload.userId,
-        anonymousId: payload.anonymousId,
-        traits: payload.traits,
-        context: context
-      });
-
-      fetch(config.endpoint, {method: "POST", headers: {'Content-Type': 'application/json'}, body: data});
-      //navigator.sendBeacon(config.endpoint, data);
-      console.log(data);
+      sendData(payload, config, instance);
     }
   }
+}
+
+function sendData(payload, config, instance) {
+  saveUTMs();
+
+  let data = {
+    type: payload.type,
+    userId: payload.userId,
+    anonymousId: payload.anonymousId
+  };
+  
+  if (payload.event) { data.event = payload.event }
+  if (payload.properties) { data.properties = payload.properties }
+  if (instance.getState().user.traits) { data.traits = instance.getState().user.traits; }
+
+  if (instance.getState().context) {
+    data.context = instance.getState().context
+
+    ['source', 'medium', 'campaign', 'term', 'content'].forEach(utm => {
+      if (analytics.storage.getItem('utm_' + utm)) { data.context.campaign[utm] = analytics.storage.getItem('utm_source') }
+    });
+  }
+
+  fetch(config.endpoint, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
+  //navigator.sendBeacon(config.endpoint, JSON.stringify(data));
+  console.log(data);
+}
+
+function saveUTMs() {
+  const params = new URL(window.location.href).searchParams;
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
+    if (params.get(utm)) {
+      analytics.storage.setItem(utm, params.get(utm), 'sessionStorage');
+    }
+  });
 }
