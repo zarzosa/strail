@@ -39,10 +39,11 @@ function sendData(payload, config, instance) {
   if (payload.event) { data.event = payload.event }
   if (payload.properties) { data.properties = payload.properties }
   if (instance.getState().user.traits) { data.traits = instance.getState().user.traits; }
-
+  
   if (instance.getState().context) {
     data.context = instance.getState().context
 
+    // Get UTMs
     utms.forEach(utm => {
       if (analytics.storage.getItem(utm)) { data.context.campaign[utm] = analytics.storage.getItem('utm_source') }
     });
