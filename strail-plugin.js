@@ -20,8 +20,15 @@ function strail(pluginConfig = {}) {
 }
 
 function sendData(payload, config, instance) {
-  saveUTMs();
+  // Save UTMS
+  const params = new URL(window.location.href).searchParams;
+  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
+    if (params.get(utm)) {
+      analytics.storage.setItem(utm, params.get(utm), 'sessionStorage');
+    }
+  });
 
+  // Build data
   let data = {
     type: payload.type,
     userId: payload.userId,
@@ -40,16 +47,9 @@ function sendData(payload, config, instance) {
     });
   }
 
+  // Send data
   fetch(config.endpoint, {method: "POST", headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data)});
   //navigator.sendBeacon(config.endpoint, JSON.stringify(data));
+  console.log('--- --- ---');
   console.log(data);
-}
-
-function saveUTMs() {
-  const params = new URL(window.location.href).searchParams;
-  ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(utm => {
-    if (params.get(utm)) {
-      analytics.storage.setItem(utm, params.get(utm), 'sessionStorage');
-    }
-  });
 }
